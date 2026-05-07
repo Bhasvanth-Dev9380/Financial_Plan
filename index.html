@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev — Wealth Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #F8F6F1; --bg2: #EFECE5; --white: #FFFFFF;
+  --card: #FFFFFF; --card-border: rgba(0,0,0,0.06); --card-hover: #FDFCFA;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow: 0 4px 20px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+  --terracotta: #C45D35; --terra-light: #FDF0EB; --terra-glow: rgba(196,93,53,0.12);
+  --teal: #0891B2; --teal-light: #E8F8FB; --teal-dim: rgba(8,145,178,0.08);
+  --emerald: #059669; --emerald-light: #ECFDF5; --emerald-dim: rgba(5,150,105,0.08);
+  --purple: #7C3AED; --purple-light: #F3EEFF; --purple-dim: rgba(124,58,237,0.08);
+  --rose: #E11D48; --rose-light: #FFF1F2;
+  --amber: #D97706; --amber-light: #FFFBEB;
+  --text: #1A1A2E; --text-mid: #4A5568; --text-dim: #7A8BA8;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --radius: 20px; --radius-sm: 12px; --radius-xs: 8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* Soft ambient blobs */
+body::before,body::after{content:'';position:fixed;border-radius:50%;filter:blur(100px);opacity:.4;z-index:0;pointer-events:none;}
+body::before{width:500px;height:500px;background:radial-gradient(circle,#FDDCB5 0%,transparent 70%);top:-180px;right:-80px;}
+body::after{width:450px;height:450px;background:radial-gradient(circle,#C4E8D1 0%,transparent 70%);bottom:-120px;left:-80px;}
+
+/* Subtle grain */
+.grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─── Navigation ─── */
+.nav{position:sticky;top:0;z-index:100;background:rgba(248,246,241,0.85);backdrop-filter:saturate(1.5) blur(16px);-webkit-backdrop-filter:saturate(1.5) blur(16px);border-bottom:1px solid var(--card-border);}
+.nav-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;padding:0 32px;gap:6px;}
+.logo{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--terracotta);padding:16px 0;margin-right:32px;letter-spacing:-.5px;}
+.logo span{color:var(--text-dim);font-size:13px;font-family:var(--sans);font-weight:500;margin-left:10px;letter-spacing:.5px;text-transform:uppercase;}
+.tab{padding:16px 20px;font-size:13px;font-weight:600;color:var(--text-mid);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .25s;letter-spacing:.2px;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--terracotta);border-bottom-color:var(--terracotta);}
+
+/* ─── Pages ─── */
+.page{display:none;padding:40px 32px 80px;max-width:1300px;margin:0 auto;position:relative;z-index:1;}
+.page.active{display:block;animation:fadeUp .45s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── Hero ─── */
+.hero{margin-bottom:36px;padding:32px 36px;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--card-border);position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:0;right:0;width:260px;height:260px;background:radial-gradient(circle,rgba(196,93,53,0.06) 0%,transparent 70%);pointer-events:none;}
+.hero-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--terracotta);background:var(--terra-light);padding:5px 14px;border-radius:20px;margin-bottom:14px;}
+.hero h1{font-family:var(--serif);font-size:clamp(30px,4.5vw,48px);font-weight:700;line-height:1.15;color:var(--text);margin-bottom:8px;}
+.hero h1 em{font-style:italic;color:var(--terracotta);}
+.hero p{font-size:14px;color:var(--text-mid);max-width:580px;line-height:1.7;}
+
+/* ─── KPI Cards ─── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:28px;}
+.kpi{background:var(--white);border:1px solid var(--card-border);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow-sm);transition:all .25s;position:relative;overflow:hidden;}
+.kpi:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi.terra::before{background:linear-gradient(90deg,var(--terracotta),#E8956E);}
+.kpi.green::before{background:linear-gradient(90deg,var(--emerald),#6EE7B7);}
+.kpi.rose::before{background:linear-gradient(90deg,var(--rose),#FDA4AF);}
+.kpi.teal::before{background:linear-gradient(90deg,var(--teal),#67E8F9);}
+.kpi.purp::before{background:linear-gradient(90deg,var(--purple),#C4B5FD);}
+.kpi-label{font-size:10px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.kpi-value{font-family:var(--serif);font-size:30px;font-weight:700;}
+.kpi-value.terra{color:var(--terracotta);} .kpi-value.green{color:var(--emerald);} .kpi-value.red{color:var(--rose);} .kpi-value.teal{color:var(--teal);} .kpi-value.purple{color:var(--purple);}
+.kpi-sub{font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:500;}
+
+/* ─── Cards ─── */
+.card{background:var(--white);border:1px solid var(--card-border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:var(--shadow-sm);transition:box-shadow .25s;}
+.card:hover{box-shadow:var(--shadow);}
+.card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--card-border);}
+.card-title .icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.icon.terra-bg{background:var(--terra-light);} .icon.green-bg{background:var(--emerald-light);} .icon.teal-bg{background:var(--teal-light);} .icon.purple-bg{background:var(--purple-light);} .icon.amber-bg{background:var(--amber-light);}
+
+/* ─── Toggle ─── */
+.toggle-row{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:14px 20px;background:var(--bg2);border-radius:var(--radius-sm);border:1px solid var(--card-border);}
+.toggle-label{font-size:13px;font-weight:600;color:var(--text-dim);transition:color .25s;}
+.toggle-label.active{color:var(--terracotta);}
+.toggle{position:relative;width:50px;height:26px;background:#D1D5DB;border-radius:13px;cursor:pointer;transition:background .3s;flex-shrink:0;}
+.toggle.on{background:var(--terracotta);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .3s cubic-bezier(.68,-.55,.27,1.55);box-shadow:0 1px 4px rgba(0,0,0,.15);}
+.toggle.on::after{transform:translateX(24px);}
+.stepup-config{display:none;align-items:center;gap:10px;margin-left:auto;}
+.stepup-config.show{display:flex;}
+.stepup-badge{font-size:12px;font-weight:700;color:var(--terracotta);background:var(--terra-light);padding:4px 12px;border-radius:var(--radius-xs);}
+
+/* ─── Inputs ─── */
+.inputs{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:768px){.inputs{grid-template-columns:1fr;}}
+.input-group{display:flex;flex-direction:column;gap:6px;}
+.input-label{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);}
+.input-row{display:flex;align-items:center;gap:12px;}
+.input-row input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;background:var(--bg2);outline:none;border:1px solid var(--card-border);}
+.input-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--terracotta);cursor:pointer;box-shadow:0 2px 6px var(--terra-glow);}
+.input-row input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--terracotta);cursor:pointer;border:none;}
+.input-val{min-width:110px;text-align:right;font-size:13px;font-weight:700;color:var(--terracotta);background:var(--terra-light);padding:8px 14px;border-radius:var(--radius-xs);border:1px solid rgba(196,93,53,0.15);cursor:text;-webkit-user-select:text;user-select:text;transition:all .2s;}
+.input-val:focus{outline:none;border-color:var(--terracotta);box-shadow:0 0 0 3px var(--terra-glow);background:#fff;color:var(--text);}
+
+/* ─── Results ─── */
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--card-border);}
+.result-row:last-child{border-bottom:none;}
+.r-label{font-size:13px;color:var(--text-mid);} .r-value{font-size:14px;font-weight:700;}
+.r-value.green{color:var(--emerald);} .r-value.red{color:var(--rose);} .r-value.terra{color:var(--terracotta);} .r-value.teal{color:var(--teal);}
+
+.big-result{background:var(--emerald-light);border:1px solid rgba(5,150,105,0.15);border-radius:var(--radius-sm);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+.big-result.warn{background:var(--rose-light);border-color:rgba(225,29,72,0.15);}
+.big-result .bl{font-size:13px;font-weight:700;color:var(--emerald);} .big-result.warn .bl{color:var(--rose);}
+.big-result .bv{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--emerald);} .big-result.warn .bv{color:var(--rose);}
+
+/* ─── Chart ─── */
+.chart-box{position:relative;height:300px;margin-top:16px;}
+
+/* ─── Monthly SIP Table ─── */
+.table-wrapper{max-height:420px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-sm);border:1px solid var(--card-border);margin-top:16px;box-shadow:var(--shadow-sm);}
+.table-wrapper::-webkit-scrollbar{width:5px;}
+.table-wrapper::-webkit-scrollbar-track{background:var(--bg);}
+.table-wrapper::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px;}
+.sip-table{width:100%;border-collapse:collapse;font-size:12px;}
+.sip-table thead{position:sticky;top:0;z-index:2;}
+.sip-table th{background:var(--bg2);color:var(--text-mid);font-weight:800;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;padding:12px 14px;text-align:right;border-bottom:2px solid var(--card-border);}
+.sip-table th:first-child{text-align:left;}
+.sip-table td{padding:9px 14px;text-align:right;border-bottom:1px solid rgba(0,0,0,0.03);color:var(--text-mid);font-variant-numeric:tabular-nums;}
+.sip-table td:first-child{text-align:left;color:var(--text);font-weight:600;}
+.sip-table tbody tr:hover td{background:rgba(196,93,53,0.03);}
+.sip-table .yr-row td{background:var(--terra-light);font-weight:700;color:var(--terracotta);border-bottom:2px solid rgba(196,93,53,0.12);}
+.sip-table .stream1{color:var(--teal);} .sip-table .stream2{color:var(--purple);} .sip-table .stream3{color:var(--emerald);}
+.sip-table .total-col{color:var(--terracotta);font-weight:700;}
+.sip-table .fund-col{color:var(--emerald);font-weight:600;}
+
+/* Stream legend */
+.stream-legend{display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap;}
+.stream-tag{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-mid);}
+.stream-dot{width:10px;height:10px;border-radius:50%;}
+
+/* ─── Budget ─── */
+.budget-card{background:var(--white);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.budget-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;justify-content:space-between;}
+.budget-bar{display:flex;height:38px;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:inset 0 1px 2px rgba(0,0,0,.06);}
+.budget-bar div{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;transition:width .5s ease;}
+.budget-items{display:flex;flex-wrap:wrap;gap:14px;}
+.budget-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mid);}
+.budget-dot{width:8px;height:8px;border-radius:50%;}
+
+/* ─── Note ─── */
+.note{font-size:12px;color:var(--text-mid);padding:12px 16px;background:var(--bg2);border-radius:var(--radius-sm);border-left:3px solid var(--terracotta);margin-top:12px;line-height:1.6;}
+
+/* ─── Timeline ─── */
+.tl-item{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--card-border);align-items:center;}
+.tl-item:last-child{border-bottom:none;}
+.tl-age{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0;font-family:var(--serif);}
+.tl-age.start{background:var(--terra-light);color:var(--terracotta);box-shadow:0 0 16px var(--terra-glow);}
+.tl-age.mile{background:var(--teal-light);color:var(--teal);}
+.tl-age.big{background:var(--emerald-light);color:var(--emerald);box-shadow:0 0 16px var(--emerald-dim);}
+.tl-text{flex:1;} .tl-text strong{color:var(--text);font-size:14px;} .tl-text small{color:var(--text-dim);font-size:12px;}
+.tl-val{text-align:right;} .tl-val .amt{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--emerald);} .tl-val .cr{font-size:11px;color:var(--terracotta);font-weight:600;}
+
+/* ─── Alloc Table ─── */
+.alloc-table{width:100%;border-collapse:collapse;}
+.alloc-table th{padding:10px 14px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);font-weight:800;background:var(--bg2);border-bottom:1px solid var(--card-border);}
+.alloc-table td{padding:10px 14px;font-size:13px;color:var(--text-mid);border-bottom:1px solid var(--card-border);}
+.alloc-table .pct{color:var(--terracotta);font-weight:700;}
+.alloc-table tbody tr:hover td{background:var(--terra-light);}
+
+/* ─── Grid ─── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
+
+/* ═══════ MOBILE RESPONSIVE ═══════ */
+
+/* ── Tablet (≤768px) ── */
+@media(max-width:768px){
+  .page{padding:28px 18px 60px;}
+  .hero{padding:22px 20px;}
+  .hero h1{font-size:clamp(24px,5vw,38px);}
+  .card{padding:20px;}
+  .nav-inner{padding:0 14px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .logo{font-size:22px;margin-right:16px;white-space:nowrap;}
+  .logo span{font-size:11px;margin-left:6px;}
+  .tab{padding:14px 14px;font-size:12px;white-space:nowrap;}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+  .kpi-value{font-size:24px;}
+  .toggle-row{flex-wrap:wrap;padding:12px 14px;gap:10px;}
+  .stepup-config{margin-left:0;width:100%;}
+  .stepup-config input[type=range]{width:80px!important;}
+  .input-val{min-width:90px;font-size:12px;padding:6px 10px;}
+  .input-row{gap:8px;}
+  .table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .sip-table{min-width:600px;}
+  .sip-table th{padding:10px 10px;font-size:9px;}
+  .sip-table td{padding:7px 10px;font-size:11px;}
+  .grid-2{gap:14px;}
+  .chart-box{height:260px;}
+  .budget-bar{height:32px;}
+  .alloc-table th,.alloc-table td{padding:8px 10px;font-size:12px;}
+  .big-result{padding:14px 18px;}
+  .big-result .bv{font-size:22px;}
+}
+
+/* ── Mobile (≤480px) ── */
+@media(max-width:480px){
+  body::before{width:300px;height:300px;top:-120px;right:-60px;}
+  body::after{width:280px;height:280px;bottom:-80px;left:-60px;}
+
+  .nav-inner{padding:0 8px;gap:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+  .nav-inner::-webkit-scrollbar{display:none;}
+  .logo{font-size:18px;margin-right:10px;padding:12px 0;}
+  .logo span{display:none;}
+  .tab{padding:12px 10px;font-size:11px;letter-spacing:0;}
+
+  .page{padding:16px 10px 50px;}
+  .hero{padding:16px 14px;border-radius:var(--radius-sm);}
+  .hero::before{width:140px;height:140px;}
+  .hero h1{font-size:clamp(20px,6vw,32px);}
+  .hero p{font-size:12px;line-height:1.5;}
+  .hero-tag{font-size:10px;letter-spacing:2px;padding:4px 10px;}
+
+  .kpis{grid-template-columns:1fr 1fr;gap:8px;}
+  .kpi{padding:14px 12px;border-radius:var(--radius-sm);}
+  .kpi-label{font-size:9.5px;letter-spacing:1.2px;margin-bottom:6px;}
+  .kpi-value{font-size:20px;}
+  .kpi-sub{font-size:10px;}
+
+  .card{padding:14px;margin-bottom:14px;border-radius:var(--radius-sm);}
+  .card-title{font-size:13px;gap:8px;padding-bottom:10px;margin-bottom:14px;}
+  .card-title .icon{width:28px;height:28px;font-size:14px;border-radius:8px;}
+
+  .toggle-row{padding:10px 10px;gap:8px;border-radius:var(--radius-xs);}
+  .toggle-label{font-size:11px;}
+  .toggle{width:42px;height:22px;}
+  .toggle::after{width:16px;height:16px;top:3px;left:3px;}
+  .toggle.on::after{transform:translateX(20px);}
+  .stepup-config{gap:6px;}
+  .stepup-config span{font-size:10px!important;}
+  .stepup-config input[type=range]{width:60px!important;}
+  .stepup-badge{font-size:10px;padding:3px 8px;}
+
+  .inputs{gap:10px;}
+  .input-group{gap:4px;}
+  .input-label{font-size:10px;letter-spacing:.6px;}
+  .input-row{gap:6px;}
+  .input-row input[type=range]{height:6px;}
+  .input-row input[type=range]::-webkit-slider-thumb{width:22px;height:22px;}
+  .input-row input[type=range]::-moz-range-thumb{width:22px;height:22px;}
+  .input-val{min-width:72px;font-size:11px;padding:6px 8px;border-radius:6px;}
+
+  .result-row{padding:8px 0;}
+  .r-label{font-size:11px;} .r-value{font-size:12px;}
+  .big-result{padding:12px 14px;border-radius:var(--radius-xs);flex-direction:column;gap:4px;text-align:center;}
+  .big-result .bl{font-size:11px;}
+  .big-result .bv{font-size:20px;}
+
+  .chart-box{height:220px;}
+
+  .table-wrapper{max-height:320px;border-radius:var(--radius-xs);}
+  .sip-table{min-width:560px;}
+  .sip-table th{padding:8px 6px;font-size:9px;letter-spacing:.8px;}
+  .sip-table td{padding:6px 6px;font-size:11px;}
+
+  .stream-legend{gap:10px;}
+  .stream-tag{font-size:10px;gap:4px;}
+  .stream-dot{width:8px;height:8px;}
+
+  .note{font-size:11px;padding:10px 12px;border-radius:var(--radius-xs);}
+
+  .tl-item{gap:10px;padding:10px 0;}
+  .tl-age{width:38px;height:38px;font-size:14px;}
+  .tl-text strong{font-size:12px;}
+  .tl-text small{font-size:10px;}
+  .tl-val .amt{font-size:14px;}
+  .tl-val .cr{font-size:9px;}
+
+  .alloc-table th{padding:8px 6px;font-size:9px;}
+  .alloc-table td{padding:8px 6px;font-size:11px;}
+
+  .budget-card{padding:14px;border-radius:var(--radius-sm);}
+  .budget-title{font-size:12px;margin-bottom:10px;}
+  .budget-bar{height:28px;border-radius:8px;}
+  .budget-bar div{font-size:8px;}
+  .budget-items{gap:8px;}
+  .budget-item{font-size:10px;}
+
+  .grid-2{gap:10px;}
+}
+
+/* ── Very small (≤360px) ── */
+@media(max-width:360px){
+  .kpis{grid-template-columns:1fr;}
+  .inputs{grid-template-columns:1fr!important;}
+  .page{padding:12px 8px 40px;}
+  .hero h1{font-size:20px;}
+  .kpi-value{font-size:18px;}
+  .tab{padding:10px 7px;font-size:10px;}
+  .logo{font-size:16px;margin-right:6px;}
+  .input-val{min-width:62px;font-size:10px;padding:5px 6px;}
+  .sip-table{min-width:500px;}
+}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<nav class="nav">
+<div class="nav-inner">
+  <div class="logo">Dev<span>Wealth Engine</span></div>
+  <div class="tab active" onclick="showTab('car')">Car Fund</div>
+  <div class="tab" onclick="showTab('house')">House Fund</div>
+  <div class="tab" onclick="showTab('wealth')">Wealth Corpus</div>
+  <div class="tab" onclick="showTab('budget')">Budget</div>
+</div>
+</nav>
+
+<!-- ══════════ CAR FUND ══════════ -->
+<div id="car" class="page active">
+<div class="hero">
+  <div class="hero-tag" id="c-hero-tag">Goal 1 — Age 29</div>
+  <h1>Your <em>BMW</em> Fund</h1>
+  <p>Build a war chest through disciplined SIPs, then buy your dream car — or use the loan arbitrage trick to profit even more.</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi terra"><div class="kpi-label">Car Fund Grows To</div><div id="ck1" class="kpi-value terra">—</div><div id="ck1s" class="kpi-sub"></div></div>
+  <div class="kpi green"><div class="kpi-label">Left After Buying</div><div id="ck2" class="kpi-value green">—</div></div>
+  <div class="kpi purp"><div class="kpi-label">Loan Trick Profit</div><div id="ck3" class="kpi-value purple">—</div></div>
+</div>
+
+<div class="toggle-row">
+  <span class="toggle-label active" id="c-lbl-sip">Regular SIP</span>
+  <div class="toggle" id="c-toggle" onclick="toggleSIP('c')"></div>
+  <span class="toggle-label" id="c-lbl-step">Step-up SIP</span>
+  <div class="stepup-config" id="c-step-cfg">
+    <span style="font-size:11px;color:var(--text-dim)">Annual hike:</span>
+    <input type="range" id="c-step" min="5" max="30" step="1" value="10" oninput="calcCar()" style="width:100px;">
+    <span class="stepup-badge" id="c-step-v">10%</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon terra-bg">⚙</div>Your Assumptions</div>
+  <div class="inputs">
+    <div class="input-group"><div class="input-label">Current Age</div><div class="input-row"><input type="range" id="c-age" min="18" max="28" value="22" oninput="calcCar()"><div class="input-val" id="c-age-v">22</div></div></div>
+    <div class="input-group"><div class="input-label">Salary Jump Age</div><div class="input-row"><input type="range" id="c-salage" min="23" max="32" value="25" oninput="calcCar()"><div class="input-val" id="c-salage-v">25</div></div></div>
+    <div class="input-group"><div class="input-label">Car Buy Age</div><div class="input-row"><input type="range" id="c-buyage" min="25" max="40" value="29" oninput="calcCar()"><div class="input-val" id="c-buyage-v">29</div></div></div>
+    <div class="input-group"><div class="input-label" id="c-sip1-label">Phase 1 SIP / mo (now → 25)</div><div class="input-row"><input type="range" id="c-sip1" min="10000" max="200000" step="5000" value="70000" oninput="calcCar()"><div class="input-val" id="c-sip1-v">₹70,000</div></div></div>
+    <div class="input-group"><div class="input-label" id="c-sip2-label">Phase 2 SIP / mo (25 → 29)</div><div class="input-row"><input type="range" id="c-sip2" min="10000" max="300000" step="5000" value="100000" oninput="calcCar()"><div class="input-val" id="c-sip2-v">₹1,00,000</div></div></div>
+    <div class="input-group"><div class="input-label">CAGR (yearly return)</div><div class="input-row"><input type="range" id="c-cagr" min="8" max="18" step="0.5" value="12" oninput="calcCar()"><div class="input-val" id="c-cagr-v">12.0%</div></div></div>
+    <div class="input-group"><div class="input-label">Car On-Road Price</div><div class="input-row"><input type="range" id="c-price" min="5000000" max="30000000" step="500000" value="10000000" oninput="calcCar()"><div class="input-val" id="c-price-v">₹1,00,00,000</div></div></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title"><div class="icon green-bg">📊</div>Fund Growth</div>
+    <div id="c-results"></div>
+    <div class="chart-box"><canvas id="c-chart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="icon purple-bg">🧠</div>Loan Arbitrage Trick</div>
+    <div class="note" style="margin-top:0;margin-bottom:14px">Borrow at 9% → keep money invested at 12% → pocket the spread</div>
+    <div class="inputs" style="margin-bottom:14px">
+      <div class="input-group"><div class="input-label">Down Payment</div><div class="input-row"><input type="range" id="c-dp" min="0" max="5000000" step="100000" value="2000000" oninput="calcCar()"><div class="input-val" id="c-dp-v">₹20,00,000</div></div></div>
+      <div class="input-group"><div class="input-label">Loan Rate</div><div class="input-row"><input type="range" id="c-lrate" min="7" max="12" step="0.25" value="9" oninput="calcCar()"><div class="input-val" id="c-lrate-v">9.0%</div></div></div>
+    </div>
+    <div id="c-loan-results"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon teal-bg">📅</div>Monthly SIP Breakdown — 3 Streams</div>
+  <div class="stream-legend">
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--teal)"></div>Large Cap / Index (40%)</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--purple)"></div>Flexi + Mid Cap (35%)</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--emerald)"></div>Small Cap + Gold (25%)</div>
+  </div>
+  <div class="table-wrapper" id="c-table-wrap"></div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon terra-bg">🎯</div>Suggested Fund Allocation</div>
+  <table class="alloc-table"><thead><tr><th>Fund Type</th><th>Split</th><th>Example Fund</th><th>Why</th></tr></thead><tbody>
+  <tr><td>Large Cap / Index</td><td class="pct">30%</td><td>UTI Nifty 50 Index</td><td>Stable core</td></tr>
+  <tr><td>Flexi Cap</td><td class="pct">25%</td><td>Parag Parikh Flexi Cap</td><td>Best all-rounder</td></tr>
+  <tr><td>Mid Cap</td><td class="pct">25%</td><td>Motilal Oswal Midcap</td><td>Growth engine</td></tr>
+  <tr><td>Small Cap</td><td class="pct">10%</td><td>Nippon Small Cap</td><td>Aggressive boost</td></tr>
+  <tr><td>Gold ETF</td><td class="pct">10%</td><td>SBI Gold ETF</td><td>Crash protection</td></tr>
+  </tbody></table>
+</div>
+</div>
+
+<!-- ══════════ HOUSE FUND ══════════ -->
+<div id="house" class="page">
+<div class="hero">
+  <div class="hero-tag" id="h-hero-tag">Goal 2 — Age 42</div>
+  <h1>Your <em>₹10 Crore</em> Home</h1>
+  <p>20 years of compounding across 3 phases. Your investments pay the EMI through SWP arbitrage — zero from your pocket.</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi terra"><div class="kpi-label" id="hk1-label">House Fund at 42</div><div id="hk1" class="kpi-value terra">—</div><div id="hk1s" class="kpi-sub"></div></div>
+  <div class="kpi rose"><div class="kpi-label">Loan Needed</div><div id="hk2" class="kpi-value red">—</div></div>
+  <div class="kpi green"><div class="kpi-label">Monthly EMI</div><div id="hk3" class="kpi-value green">—</div><div id="hk3s" class="kpi-sub"></div></div>
+</div>
+
+<div class="toggle-row">
+  <span class="toggle-label active" id="h-lbl-sip">Regular SIP</span>
+  <div class="toggle" id="h-toggle" onclick="toggleSIP('h')"></div>
+  <span class="toggle-label" id="h-lbl-step">Step-up SIP</span>
+  <div class="stepup-config" id="h-step-cfg">
+    <span style="font-size:11px;color:var(--text-dim)">Annual hike:</span>
+    <input type="range" id="h-step" min="5" max="30" step="1" value="10" oninput="calcHouse()" style="width:100px;">
+    <span class="stepup-badge" id="h-step-v">10%</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon terra-bg">⚙</div>Your Assumptions</div>
+  <div class="inputs">
+    <div class="input-group"><div class="input-label">Current Age</div><div class="input-row"><input type="range" id="h-age" min="18" max="30" value="22" oninput="calcHouse()"><div class="input-val" id="h-age-v">22</div></div></div>
+    <div class="input-group"><div class="input-label">Salary Jump Age</div><div class="input-row"><input type="range" id="h-salage" min="23" max="32" value="25" oninput="calcHouse()"><div class="input-val" id="h-salage-v">25</div></div></div>
+    <div class="input-group"><div class="input-label">Car Buy Age</div><div class="input-row"><input type="range" id="h-carage" min="25" max="40" value="29" oninput="calcHouse()"><div class="input-val" id="h-carage-v">29</div></div></div>
+    <div class="input-group"><div class="input-label">House Buy Age</div><div class="input-row"><input type="range" id="h-houseage" min="30" max="55" value="42" oninput="calcHouse()"><div class="input-val" id="h-houseage-v">42</div></div></div>
+    <div class="input-group"><div class="input-label" id="h-sip1-label">Phase 1 SIP / mo (now → 25)</div><div class="input-row"><input type="range" id="h-sip1" min="10000" max="150000" step="5000" value="40000" oninput="calcHouse()"><div class="input-val" id="h-sip1-v">₹40,000</div></div></div>
+    <div class="input-group"><div class="input-label" id="h-sip2-label">Phase 2 SIP / mo (25 → 29)</div><div class="input-row"><input type="range" id="h-sip2" min="10000" max="200000" step="5000" value="80000" oninput="calcHouse()"><div class="input-val" id="h-sip2-v">₹80,000</div></div></div>
+    <div class="input-group"><div class="input-label" id="h-sip3-label">Phase 3 SIP / mo (29 → 42)</div><div class="input-row"><input type="range" id="h-sip3" min="50000" max="300000" step="5000" value="150000" oninput="calcHouse()"><div class="input-val" id="h-sip3-v">₹1,50,000</div></div></div>
+    <div class="input-group"><div class="input-label">CAGR</div><div class="input-row"><input type="range" id="h-cagr" min="8" max="16" step="0.5" value="12" oninput="calcHouse()"><div class="input-val" id="h-cagr-v">12.0%</div></div></div>
+    <div class="input-group"><div class="input-label">House Price</div><div class="input-row"><input type="range" id="h-price" min="50000000" max="200000000" step="5000000" value="100000000" oninput="calcHouse()"><div class="input-val" id="h-price-v">₹10,00,00,000</div></div></div>
+    <div class="input-group"><div class="input-label">Loan Interest</div><div class="input-row"><input type="range" id="h-lrate" min="7" max="11" step="0.25" value="8.5" oninput="calcHouse()"><div class="input-val" id="h-lrate-v">8.5%</div></div></div>
+    <div class="input-group"><div class="input-label">Loan Tenure (yrs)</div><div class="input-row"><input type="range" id="h-lyrs" min="10" max="30" value="20" oninput="calcHouse()"><div class="input-val" id="h-lyrs-v">20</div></div></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title"><div class="icon green-bg">📊</div>Fund Growth & Loan</div>
+    <div id="h-results"></div>
+    <div class="chart-box"><canvas id="h-chart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="icon purple-bg">✨</div>SWP Magic — Investments Pay EMI</div>
+    <div class="note" style="margin-top:0;margin-bottom:14px">Park loan amount in equity at 12%. Withdraw monthly = your EMI. Fund STILL grows!</div>
+    <div id="h-swp-results"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon teal-bg">📅</div>Monthly SIP Breakdown — 3 Streams</div>
+  <div class="stream-legend">
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--teal)"></div>Large Cap / Index (30%)</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--purple)"></div>Flexi + Mid Cap (40%)</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--emerald)"></div>Small Cap + Gold (30%)</div>
+  </div>
+  <div class="table-wrapper" id="h-table-wrap"></div>
+</div>
+</div>
+
+<!-- ══════════ WEALTH ══════════ -->
+<div id="wealth" class="page">
+<div class="hero">
+  <div class="hero-tag" id="w-hero-tag">Goal 3 — Age 60</div>
+  <h1>The <em>₹100 Crore</em> Mission</h1>
+  <p id="w-hero-p">38 years. 4 phases. The power of compounding turns disciplined monthly SIPs into generational wealth.</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi terra"><div class="kpi-label" id="wk1-label">Final Wealth at 60</div><div id="wk1" class="kpi-value terra">—</div><div id="wk1s" class="kpi-sub"></div></div>
+  <div class="kpi green"><div class="kpi-label">Target</div><div id="wk2" class="kpi-value green">₹100 Cr</div></div>
+  <div class="kpi rose"><div class="kpi-label">Beat Target By</div><div id="wk3" class="kpi-value">—</div></div>
+</div>
+
+<div class="toggle-row">
+  <span class="toggle-label active" id="w-lbl-sip">Regular SIP</span>
+  <div class="toggle" id="w-toggle" onclick="toggleSIP('w')"></div>
+  <span class="toggle-label" id="w-lbl-step">Step-up SIP</span>
+  <div class="stepup-config" id="w-step-cfg">
+    <span style="font-size:11px;color:var(--text-dim)">Annual hike:</span>
+    <input type="range" id="w-step" min="5" max="30" step="1" value="10" oninput="calcWealth()" style="width:100px;">
+    <span class="stepup-badge" id="w-step-v">10%</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon terra-bg">⚙</div>4-Phase Saving Plan</div>
+  <div class="inputs">
+    <div class="input-group"><div class="input-label">Current Age</div><div class="input-row"><input type="range" id="w-age" min="18" max="30" value="22" oninput="calcWealth()"><div class="input-val" id="w-age-v">22</div></div></div>
+    <div class="input-group"><div class="input-label">Salary Jump Age</div><div class="input-row"><input type="range" id="w-salage" min="23" max="32" value="25" oninput="calcWealth()"><div class="input-val" id="w-salage-v">25</div></div></div>
+    <div class="input-group"><div class="input-label">Car Buy Age</div><div class="input-row"><input type="range" id="w-carage" min="25" max="40" value="29" oninput="calcWealth()"><div class="input-val" id="w-carage-v">29</div></div></div>
+    <div class="input-group"><div class="input-label">House Buy Age</div><div class="input-row"><input type="range" id="w-houseage" min="30" max="55" value="42" oninput="calcWealth()"><div class="input-val" id="w-houseage-v">42</div></div></div>
+    <div class="input-group"><div class="input-label">Retirement Age</div><div class="input-row"><input type="range" id="w-retage" min="45" max="70" value="60" oninput="calcWealth()"><div class="input-val" id="w-retage-v">60</div></div></div>
+    <div class="input-group"><div class="input-label">Current Corpus</div><div class="input-row"><input type="range" id="w-corpus" min="0" max="2000000" step="50000" value="300000" oninput="calcWealth()"><div class="input-val" id="w-corpus-v">₹3,00,000</div></div></div>
+    <div class="input-group"><div class="input-label" id="w-sip1-label">Phase 1 SIP / mo (22–25)</div><div class="input-row"><input type="range" id="w-sip1" min="10000" max="150000" step="5000" value="40000" oninput="calcWealth()"><div class="input-val" id="w-sip1-v">₹40,000</div></div></div>
+    <div class="input-group"><div class="input-label" id="w-sip2-label">Phase 2 SIP / mo (25–29)</div><div class="input-row"><input type="range" id="w-sip2" min="50000" max="300000" step="5000" value="120000" oninput="calcWealth()"><div class="input-val" id="w-sip2-v">₹1,20,000</div></div></div>
+    <div class="input-group"><div class="input-label" id="w-sip3-label">Phase 3 SIP / mo (29–42)</div><div class="input-row"><input type="range" id="w-sip3" min="50000" max="300000" step="5000" value="150000" oninput="calcWealth()"><div class="input-val" id="w-sip3-v">₹1,50,000</div></div></div>
+    <div class="input-group"><div class="input-label" id="w-sip4-label">Phase 4 SIP / mo (42–60)</div><div class="input-row"><input type="range" id="w-sip4" min="100000" max="500000" step="10000" value="300000" oninput="calcWealth()"><div class="input-val" id="w-sip4-v">₹3,00,000</div></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon green-bg">🎯</div>Allocation — Blended CAGR</div>
+  <div class="inputs">
+    <div class="input-group"><div class="input-label">Large Cap — 12%</div><div class="input-row"><input type="range" id="w-lc" min="0" max="100" step="5" value="40" oninput="calcWealth()"><div class="input-val" id="w-lc-v">40%</div></div></div>
+    <div class="input-group"><div class="input-label">Mid Cap — 14%</div><div class="input-row"><input type="range" id="w-mc" min="0" max="100" step="5" value="30" oninput="calcWealth()"><div class="input-val" id="w-mc-v">30%</div></div></div>
+    <div class="input-group"><div class="input-label">Small Cap — 16%</div><div class="input-row"><input type="range" id="w-sc" min="0" max="100" step="5" value="15" oninput="calcWealth()"><div class="input-val" id="w-sc-v">15%</div></div></div>
+    <div class="input-group"><div class="input-label">Gold — 10%</div><div class="input-row"><input type="range" id="w-gd" min="0" max="100" step="5" value="10" oninput="calcWealth()"><div class="input-val" id="w-gd-v">10%</div></div></div>
+    <div class="input-group"><div class="input-label">Debt — 7%</div><div class="input-row"><input type="range" id="w-dt" min="0" max="100" step="5" value="5" oninput="calcWealth()"><div class="input-val" id="w-dt-v">5%</div></div></div>
+    <div class="input-group"><div class="input-label">Total</div><div class="input-val" id="w-tot-v" style="font-size:16px;text-align:center;width:100%">100%</div></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title"><div class="icon terra-bg">📊</div>Wealth Milestones</div>
+    <div id="w-results"></div>
+    <div class="chart-box"><canvas id="w-chart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="icon green-bg">🗓</div>Life Money Timeline</div>
+    <div id="w-timeline"></div>
+    <div class="chart-box"><canvas id="w-pie"></canvas></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><div class="icon teal-bg">📅</div>Monthly SIP Breakdown — 3 Streams</div>
+  <div class="stream-legend">
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--teal)"></div>Large Cap / Index</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--purple)"></div>Mid + Flexi Cap</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--emerald)"></div>Small Cap + Gold + Debt</div>
+  </div>
+  <div class="table-wrapper" id="w-table-wrap"></div>
+</div>
+</div>
+
+<!-- ══════════ BUDGET ══════════ -->
+<div id="budget" class="page">
+<div class="hero">
+  <div class="hero-tag">Overview</div>
+  <h1>Monthly <em>Budget</em> Split</h1>
+  <p>How your salary distributes across all 3 goals and living expenses in each life phase.</p>
+</div>
+<div id="budget-content"></div>
+</div>
+
+<script>
+/* ── Utilities ── */
+function inr(n){if(n==null||isNaN(n))return'—';const neg=n<0;n=Math.abs(Math.round(n));let s=n.toString(),r='',c=0;for(let i=s.length-1;i>=0;i--){r=s[i]+r;c++;if(i>0){if(c===3&&s.length>3){r=','+r;c=0;}else if(c===2&&r.length>4){r=','+r;c=0;}}}return(neg?'-':'')+'₹'+r;}
+function inrCr(n){return(n/10000000).toFixed(2)+' Cr';}
+function emi(p,r,n){if(p<=0)return 0;const mr=r/12;return p*mr*((1+mr)**n)/(((1+mr)**n)-1);}
+function gv(id){return parseFloat(document.getElementById(id).value);}
+function sv(id,v){document.getElementById(id).textContent=v;}
+
+/*
+ * CORE ENGINE: Month-by-month phased calculator
+ * - All compounding is MONTHLY (accurate, matches Groww/ET Money)
+ * - Step-up year counter is GLOBAL (continuous across phases)
+ * - Returns milestones at each phase boundary + full monthly data
+ */
+function calcPhased(phases, annualRate, isStep, stepRate, initialCorpus){
+  const mr = annualRate / 12;
+  let fund = initialCorpus || 0;
+  let invested = 0, globalMonth = 0;
+  const milestones = [];
+  const monthly = [];
+  for(const ph of phases){
+    for(let m = 0; m < ph.months; m++){
+      const yr = Math.floor(globalMonth / 12);
+      const sip = isStep ? ph.baseSip * ((1 + stepRate) ** yr) : ph.baseSip;
+      invested += sip;
+      fund = fund * (1 + mr) + sip;  // ordinary annuity (matches Groww/ET Money)
+      globalMonth++;
+      monthly.push({month:globalMonth, phase:ph.label, sip, cumulative:invested, fundValue:fund});
+    }
+    milestones.push({fund, invested});
+  }
+  return {fund, invested, milestones, monthly};
+}
+
+/* Yearly snapshots for charts (reuses calcPhased logic) */
+function yearlySnapshots(phases, annualRate, isStep, stepRate, initialCorpus){
+  const mr = annualRate / 12;
+  let fund = initialCorpus || 0, invested = 0, gm = 0;
+  const totalMonths = phases.reduce((s,p)=>s+p.months,0);
+  const totalYears = Math.ceil(totalMonths / 12);
+  const invByYr = [], fundByYr = [], labels = [];
+  let phIdx = 0, phMonth = 0;
+  for(let m = 0; m < totalMonths; m++){
+    while(phIdx < phases.length && phMonth >= phases[phIdx].months){ phMonth = 0; phIdx++; }
+    if(phIdx >= phases.length) break;
+    const yr = Math.floor(gm / 12);
+    const sip = isStep ? phases[phIdx].baseSip * ((1+stepRate)**yr) : phases[phIdx].baseSip;
+    invested += sip;
+    fund = fund * (1 + mr) + sip;
+    gm++; phMonth++;
+    if(gm % 12 === 0){
+      labels.push('Yr ' + (gm/12));
+      invByYr.push(invested);
+      fundByYr.push(fund);
+    }
+  }
+  if(gm % 12 !== 0){ labels.push('Yr ' + Math.ceil(gm/12)); invByYr.push(invested); fundByYr.push(fund); }
+  return {labels, invByYr, fundByYr};
+}
+
+const sipMode={c:false,h:false,w:false};
+function toggleSIP(prefix){
+  sipMode[prefix]=!sipMode[prefix];
+  document.getElementById(prefix+'-toggle').classList.toggle('on',sipMode[prefix]);
+  document.getElementById(prefix+'-step-cfg').classList.toggle('show',sipMode[prefix]);
+  document.getElementById(prefix+'-lbl-sip').classList.toggle('active',!sipMode[prefix]);
+  document.getElementById(prefix+'-lbl-step').classList.toggle('active',sipMode[prefix]);
+  if(prefix==='c')calcCar();else if(prefix==='h')calcHouse();else calcWealth();
+}
+
+let cChart,hChart,wChart,wPie;
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelector(`.tab[onclick="showTab('${t}')"]`).classList.add('active');
+  document.getElementById(t).classList.add('active');
+}
+
+const CC={grid:'rgba(0,0,0,0.04)',tick:'#7A8BA8',terra:'#C45D35',terraL:'rgba(196,93,53,0.15)',teal:'#0891B2',tealL:'rgba(8,145,178,0.12)',emerald:'#059669',emeraldL:'rgba(5,150,105,0.12)',purple:'#7C3AED',purpleL:'rgba(124,58,237,0.12)'};
+
+/* ── Monthly Table from pre-computed data ── */
+function renderMonthlyTable(wrapperId, monthlyData, streams){
+  let html='<table class="sip-table"><thead><tr><th>Mo.</th><th>Phase</th>';
+  streams.forEach(s=>{html+=`<th>${s.name}</th>`;});
+  html+='<th>Total SIP</th><th>Cumulative</th><th>Est. Fund</th></tr></thead><tbody>';
+  monthlyData.forEach((row,i)=>{
+    const isYrEnd = (row.month % 12 === 0) || (i === monthlyData.length-1) || (i+1 < monthlyData.length && monthlyData[i+1].phase !== row.phase && (row.month % 12 !== 0));
+    html+=`<tr${isYrEnd?' class="yr-row"':''}><td>${row.month}</td><td>${row.phase}</td>`;
+    streams.forEach((s,si)=>{html+=`<td class="stream${si+1}">${inr(Math.round(row.sip*s.pct))}</td>`;});
+    html+=`<td class="total-col">${inr(Math.round(row.sip))}</td><td>${inr(Math.round(row.cumulative))}</td><td class="fund-col">${inr(Math.round(row.fundValue))}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById(wrapperId).innerHTML=html;
+}
+
+/* ══════════ CAR ══════════ */
+function calcCar(){
+  const age=gv('c-age'),salAge=gv('c-salage'),buyAge=gv('c-buyage');
+  const sip1=gv('c-sip1'),sip2=gv('c-sip2'),cagr=gv('c-cagr')/100,price=gv('c-price');
+  const dp=gv('c-dp'),lrate=gv('c-lrate')/100;
+  const isStep=sipMode.c,stepRate=isStep?gv('c-step')/100:0;
+  sv('c-age-v',age);sv('c-salage-v',salAge);sv('c-buyage-v',buyAge);
+  sv('c-sip1-v',inr(sip1));sv('c-sip2-v',inr(sip2));
+  sv('c-cagr-v',(cagr*100).toFixed(1)+'%');sv('c-price-v',inr(price));
+  sv('c-dp-v',inr(dp));sv('c-lrate-v',(lrate*100).toFixed(1)+'%');
+  if(isStep)sv('c-step-v',gv('c-step')+'%');
+  // Dynamic labels
+  sv('c-hero-tag','Goal 1 — Age '+buyAge);
+  sv('c-sip1-label','Phase 1 SIP / mo (now → '+salAge+')');
+  sv('c-sip2-label','Phase 2 SIP / mo ('+salAge+' → '+buyAge+')');
+
+  const yrs=buyAge-age;
+  const p1m=Math.max(0,Math.min((salAge-age),yrs)*12),p2m=Math.max(0,(buyAge-salAge)*12);
+  const phases=[];
+  if(p1m>0)phases.push({label:'P1 (→'+salAge+')',baseSip:sip1,months:p1m});
+  if(p2m>0)phases.push({label:'P2 ('+salAge+'→'+buyAge+')',baseSip:sip2,months:p2m});
+
+  const R=calcPhased(phases,cagr,isStep,stepRate);
+  const fund=R.fund, invested=R.invested;
+  const surplus=fund-price;
+  const loan=price-dp,lEmi=emi(loan,lrate,60),lint=lEmi*60-loan;
+  const kept=fund-dp,mr5=cagr/12,grows=kept*((1+mr5)**60),profit=grows-kept-lint;
+
+  sv('ck1',inr(fund));sv('ck1s','~ '+inrCr(fund));
+  sv('ck2',inr(surplus));document.getElementById('ck2').className='kpi-value '+(surplus>=0?'green':'red');
+  sv('ck3',inr(profit));
+
+  let html=`<div class="result-row"><span class="r-label">Total Invested</span><span class="r-value">${inr(invested)}</span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Fund Grows To</span><span class="r-value green">${inr(fund)}</span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Compounding Profit</span><span class="r-value green">${inr(fund-invested)}</span></div>`;
+  html+=`<div class="big-result${surplus<0?' warn':''}"><span class="bl">${surplus>=0?'💰 LEFT AFTER CAR':'⚠️ SHORT BY'}</span><span class="bv">${inr(Math.abs(surplus))}</span></div>`;
+  document.getElementById('c-results').innerHTML=html;
+
+  let lhtml=`<div class="result-row"><span class="r-label">Loan Amount</span><span class="r-value">${inr(loan)}</span></div>`;
+  lhtml+=`<div class="result-row"><span class="r-label">Monthly EMI (5yr)</span><span class="r-value terra">${inr(lEmi)}</span></div>`;
+  lhtml+=`<div class="result-row"><span class="r-label">Interest Paid</span><span class="r-value red">${inr(lint)}</span></div>`;
+  lhtml+=`<div class="result-row"><span class="r-label">Invested Grows To</span><span class="r-value green">${inr(grows)}</span></div>`;
+  lhtml+=`<div class="big-result"><span class="bl">🏆 EXTRA PROFIT</span><span class="bv">${inr(profit)}</span></div>`;
+  document.getElementById('c-loan-results').innerHTML=lhtml;
+
+  const snap=yearlySnapshots(phases,cagr,isStep,stepRate);
+  if(cChart)cChart.destroy();
+  cChart=new Chart(document.getElementById('c-chart'),{type:'bar',data:{labels:snap.labels,datasets:[
+    {label:'Invested',data:snap.invByYr,backgroundColor:CC.tealL,borderColor:CC.teal,borderWidth:1,borderRadius:4},
+    {label:'Fund Value',data:snap.fundByYr,backgroundColor:CC.terraL,borderColor:CC.terra,borderWidth:1,borderRadius:4}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:CC.tick,font:{size:11,family:'Plus Jakarta Sans'}}}},scales:{x:{ticks:{color:CC.tick},grid:{color:CC.grid}},y:{ticks:{color:CC.tick,callback:v=>inrCr(v)},grid:{color:CC.grid}}}}});
+
+  renderMonthlyTable('c-table-wrap',R.monthly,[{name:'Large Cap',pct:.40},{name:'Flexi+Mid',pct:.35},{name:'Small+Gold',pct:.25}]);
+  buildBudget();
+}
+
+/* ══════════ HOUSE ══════════ */
+function calcHouse(){
+  const age=gv('h-age'),salAge=gv('h-salage'),carAge=gv('h-carage'),houseAge=gv('h-houseage');
+  const s1=gv('h-sip1'),s2=gv('h-sip2'),s3=gv('h-sip3'),cagr=gv('h-cagr')/100,price=gv('h-price'),lr=gv('h-lrate')/100,lt=gv('h-lyrs');
+  const isStep=sipMode.h,stepRate=isStep?gv('h-step')/100:0;
+  sv('h-age-v',age);sv('h-salage-v',salAge);sv('h-carage-v',carAge);sv('h-houseage-v',houseAge);
+  sv('h-sip1-v',inr(s1));sv('h-sip2-v',inr(s2));sv('h-sip3-v',inr(s3));
+  sv('h-cagr-v',(cagr*100).toFixed(1)+'%');sv('h-price-v',inr(price));sv('h-lrate-v',(lr*100).toFixed(1)+'%');sv('h-lyrs-v',lt);
+  if(isStep)sv('h-step-v',gv('h-step')+'%');
+  // Dynamic labels
+  sv('h-hero-tag','Goal 2 — Age '+houseAge);
+  sv('hk1-label','House Fund at '+houseAge);
+  sv('h-sip1-label','Phase 1 SIP / mo (now → '+salAge+')');
+  sv('h-sip2-label','Phase 2 SIP / mo ('+salAge+' → '+carAge+')');
+  sv('h-sip3-label','Phase 3 SIP / mo ('+carAge+' → '+houseAge+')');
+
+  const p1m=Math.max(0,(salAge-age)*12),p2m=Math.max(0,(carAge-salAge)*12),p3m=Math.max(0,(houseAge-carAge)*12);
+  const phases=[
+    {label:'P1 (→'+salAge+')',baseSip:s1,months:p1m},
+    {label:'P2 ('+salAge+'→'+carAge+')',baseSip:s2,months:p2m},
+    {label:'P3 ('+carAge+'→'+houseAge+')',baseSip:s3,months:p3m}
+  ];
+  const R=calcPhased(phases,cagr,isStep,stepRate);
+  const f1=R.milestones[0]?R.milestones[0].fund:0, f2=R.milestones[1]?R.milestones[1].fund:0, f3=R.fund;
+  const loan=Math.max(0,price-f3),memi=loan>0?emi(loan,lr,lt*12):0;
+  const emiPct=memi/500000;
+  const swpMr=0.12/12;
+  let swpFund=loan;for(let m=0;m<lt*12;m++){swpFund=(swpFund-memi)*(1+swpMr);}
+
+  sv('hk1',inr(f3));sv('hk1s','~ '+inrCr(f3));sv('hk2',inr(loan));sv('hk3',inr(memi));
+  sv('hk3s',(emiPct*100).toFixed(1)+'% of ₹5L salary');
+
+  let html=`<div class="result-row"><span class="r-label">Phase 1 Fund (age ${salAge})</span><span class="r-value">${inr(f1)} <small style="color:var(--terracotta)">(${inrCr(f1)})</small></span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Phase 2 Fund (age ${carAge})</span><span class="r-value">${inr(f2)} <small style="color:var(--terracotta)">(${inrCr(f2)})</small></span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Phase 3 Fund (age ${houseAge})</span><span class="r-value green">${inr(f3)} <small style="color:var(--terracotta)">(${inrCr(f3)})</small></span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Loan Needed</span><span class="r-value red">${inr(loan)} (${inrCr(loan)})</span></div>`;
+  html+=`<div class="result-row"><span class="r-label">EMI / month</span><span class="r-value ${emiPct<.35?'green':'red'}">${inr(memi)}</span></div>`;
+  html+=`<div class="result-row"><span class="r-label">EMI as % salary</span><span class="r-value ${emiPct<.35?'green':'red'}">${(emiPct*100).toFixed(1)}% ${emiPct<.35?'✅':'⚠️ High'}</span></div>`;
+  document.getElementById('h-results').innerHTML=html;
+
+  let shtml=`<div class="result-row"><span class="r-label">Park in Equity (12%)</span><span class="r-value">${inr(loan)}</span></div>`;
+  shtml+=`<div class="result-row"><span class="r-label">Monthly Withdrawal = EMI</span><span class="r-value terra">${inr(memi)}</span></div>`;
+  shtml+=`<div class="big-result${swpFund<0?' warn':''}"><span class="bl">✨ FUND LEFT AFTER ${lt} YRS</span><span class="bv">${inr(swpFund)}</span></div>`;
+  shtml+=`<div class="note">${swpFund>0?'Investments paid every EMI AND still have '+inrCr(swpFund)+' left!':'Fund runs dry — consider higher SIP or longer tenure.'}</div>`;
+  document.getElementById('h-swp-results').innerHTML=shtml;
+
+  if(hChart)hChart.destroy();
+  hChart=new Chart(document.getElementById('h-chart'),{type:'bar',data:{labels:['Phase 1\n('+salAge+')','Phase 2\n('+carAge+')','Phase 3\n('+houseAge+')'],datasets:[
+    {label:'Fund',data:[f1,f2,f3],backgroundColor:[CC.tealL,CC.purpleL,CC.terraL],borderColor:[CC.teal,CC.purple,CC.terra],borderWidth:1,borderRadius:6}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:CC.tick},grid:{color:CC.grid}},y:{ticks:{color:CC.tick,callback:v=>inrCr(v)},grid:{color:CC.grid}}}}});
+
+  renderMonthlyTable('h-table-wrap',R.monthly,[{name:'Large Cap',pct:.30},{name:'Flexi+Mid',pct:.40},{name:'Small+Gold',pct:.30}]);
+  buildBudget();
+}
+
+/* ══════════ WEALTH ══════════ */
+function calcWealth(){
+  const age=gv('w-age'),salAge=gv('w-salage'),carAge=gv('w-carage'),houseAge=gv('w-houseage'),retAge=gv('w-retage');
+  const corpus=gv('w-corpus'),s1=gv('w-sip1'),s2=gv('w-sip2'),s3=gv('w-sip3'),s4=gv('w-sip4');
+  const lc=gv('w-lc')/100,mc=gv('w-mc')/100,sc_=gv('w-sc')/100,gd=gv('w-gd')/100,dt=gv('w-dt')/100;
+  const total=lc+mc+sc_+gd+dt;
+  const cagr=total>0?(0.12*lc+0.14*mc+0.16*sc_+0.10*gd+0.07*dt)/total:0.12;
+  const isStep=sipMode.w,stepRate=isStep?gv('w-step')/100:0;
+
+  sv('w-age-v',age);sv('w-salage-v',salAge);sv('w-carage-v',carAge);sv('w-houseage-v',houseAge);sv('w-retage-v',retAge);
+  sv('w-corpus-v',inr(corpus));
+  sv('w-sip1-v',inr(s1));sv('w-sip2-v',inr(s2));sv('w-sip3-v',inr(s3));sv('w-sip4-v',inr(s4));
+  sv('w-lc-v',Math.round(lc*100)+'%');sv('w-mc-v',Math.round(mc*100)+'%');
+  sv('w-sc-v',Math.round(sc_*100)+'%');sv('w-gd-v',Math.round(gd*100)+'%');sv('w-dt-v',Math.round(dt*100)+'%');
+  const tv=document.getElementById('w-tot-v');
+  tv.textContent=Math.round(total*100)+'%';
+  tv.style.color=Math.abs(total-1)<0.01?'var(--emerald)':'var(--rose)';
+  tv.style.borderColor=Math.abs(total-1)<0.01?'rgba(5,150,105,.2)':'rgba(225,29,72,.2)';
+  if(isStep)sv('w-step-v',gv('w-step')+'%');
+  // Dynamic labels
+  const totalYrs=retAge-age;
+  sv('w-hero-tag','Goal 3 — Age '+retAge);
+  sv('w-hero-p',totalYrs+' years. 4 phases. The power of compounding turns disciplined monthly SIPs into generational wealth.');
+  sv('wk1-label','Final Wealth at '+retAge);
+  sv('w-sip1-label','Phase 1 SIP / mo ('+age+'–'+salAge+')');
+  sv('w-sip2-label','Phase 2 SIP / mo ('+salAge+'–'+carAge+')');
+  sv('w-sip3-label','Phase 3 SIP / mo ('+carAge+'–'+houseAge+')');
+  sv('w-sip4-label','Phase 4 SIP / mo ('+houseAge+'–'+retAge+')');
+
+  const p1m=Math.max(0,(salAge-age)*12),p2m=Math.max(0,(carAge-salAge)*12),p3m=Math.max(0,(houseAge-carAge)*12),p4m=Math.max(0,(retAge-houseAge)*12);
+  const phases=[
+    {label:'P1 ('+age+'→'+salAge+')',baseSip:s1,months:p1m},
+    {label:'P2 ('+salAge+'→'+carAge+')',baseSip:s2,months:p2m},
+    {label:'P3 ('+carAge+'→'+houseAge+')',baseSip:s3,months:p3m},
+    {label:'P4 ('+houseAge+'→'+retAge+')',baseSip:s4,months:p4m}
+  ];
+  const R=calcPhased(phases,cagr,isStep,stepRate,corpus);
+  const f1=R.milestones[0]?R.milestones[0].fund:0, f2=R.milestones[1]?R.milestones[1].fund:0, f3=R.milestones[2]?R.milestones[2].fund:0, f4=R.fund;
+
+  sv('wk1',inrCr(f4));sv('wk1s',inr(f4));
+  const beat=f4/1000000000-1;
+  sv('wk3',(beat>=0?'+':'')+Math.round(beat*100)+'%');
+  document.getElementById('wk3').className='kpi-value '+(beat>=0?'green':'red');
+
+  let html=`<div class="result-row"><span class="r-label">Blended CAGR</span><span class="r-value teal">${(cagr*100).toFixed(2)}%</span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Age ${salAge} — ${salAge-age} years</span><span class="r-value">${inr(f1)} <small style="color:var(--terracotta)">(${inrCr(f1)})</small></span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Age ${carAge} — ${carAge-age} years</span><span class="r-value">${inr(f2)} <small style="color:var(--terracotta)">(${inrCr(f2)})</small></span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Age ${houseAge} — ${houseAge-age} years</span><span class="r-value">${inr(f3)} <small style="color:var(--terracotta)">(${inrCr(f3)})</small></span></div>`;
+  html+=`<div class="result-row"><span class="r-label">Age ${retAge} — ${retAge-age} years</span><span class="r-value green" style="font-size:17px">${inr(f4)} <small style="color:var(--terracotta)">(${inrCr(f4)})</small></span></div>`;
+  html+=`<div class="big-result"><span class="bl">🏆 FINAL WEALTH</span><span class="bv">${inrCr(f4)}</span></div>`;
+  document.getElementById('w-results').innerHTML=html;
+
+  const events=[
+    {age:age,text:'Start investing today!',sip:s1,w:corpus,cls:'start'},
+    {age:salAge,text:'Salary jump, SIP increases',sip:s2,w:f1,cls:'mile'},
+    {age:carAge,text:'BMW bought! Car SIP freed',sip:s3,w:f2,cls:'mile'},
+    {age:houseAge,text:'₹10 Cr house! All to wealth',sip:s4,w:f3,cls:'mile'},
+    {age:retAge,text:'RETIRE RICH!',sip:0,w:f4,cls:'big'},
+  ];
+  let thtml='';
+  events.forEach(e=>{thtml+=`<div class="tl-item"><div class="tl-age ${e.cls}">${e.age}</div><div class="tl-text"><strong>${e.text}</strong><br><small>SIP: ${e.sip?inr(e.sip)+'/mo':'—'}</small></div><div class="tl-val"><div class="amt">${inr(e.w)}</div><div class="cr">${inrCr(e.w)}</div></div></div>`;});
+  document.getElementById('w-timeline').innerHTML=thtml;
+
+  if(wChart)wChart.destroy();
+  wChart=new Chart(document.getElementById('w-chart'),{type:'bar',data:{labels:['Age '+salAge,'Age '+carAge,'Age '+houseAge,'Age '+retAge],datasets:[
+    {label:'Wealth',data:[f1,f2,f3,f4],backgroundColor:[CC.tealL,CC.purpleL,CC.terraL,CC.emeraldL],borderColor:[CC.teal,CC.purple,CC.terra,CC.emerald],borderWidth:1,borderRadius:6}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:CC.tick},grid:{color:CC.grid}},y:{ticks:{color:CC.tick,callback:v=>inrCr(v)},grid:{color:CC.grid}}}}});
+
+  if(wPie)wPie.destroy();
+  wPie=new Chart(document.getElementById('w-pie'),{type:'doughnut',data:{
+    labels:['Large Cap','Mid Cap','Small Cap','Gold','Debt'],
+    datasets:[{data:[lc,mc,sc_,gd,dt],backgroundColor:[CC.teal,CC.purple,CC.emerald,CC.terra,'#94A3B8'],borderWidth:2,borderColor:'#FFFFFF'}]
+  },options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:CC.tick,font:{size:11,family:'Plus Jakarta Sans'},padding:12}}}}});
+
+  const st1=lc/(total||1),st2=(mc+sc_*.5)/(total||1),st3=(sc_*.5+gd+dt)/(total||1);
+  renderMonthlyTable('w-table-wrap',R.monthly,[{name:'Large Cap',pct:st1},{name:'Mid+Flexi',pct:st2},{name:'Small+Gold+Debt',pct:st3}]);
+  buildBudget();
+}
+
+/* ══════════ BUDGET ══════════ */
+function buildBudget(){
+  const age=gv('w-age'),salAge=gv('w-salage'),carAge=gv('w-carage'),houseAge=gv('w-houseage'),retAge=gv('w-retage');
+  const cs1=gv('c-sip1'),cs2=gv('c-sip2'),hs1=gv('h-sip1'),hs2=gv('h-sip2'),hs3=gv('h-sip3');
+  const ws1=gv('w-sip1'),ws2=gv('w-sip2'),ws3=gv('w-sip3'),ws4=gv('w-sip4');
+  const p1t=cs1+hs1+ws1+80000,p2t=cs2+hs2+ws2+200000,p3t=hs3+ws3+200000,p4t=ws4+200000;
+  const phases=[
+    {title:'PHASE 1: AGE '+age+'–'+salAge,sub:'Salary ₹2.3L/month',items:[{n:'Car SIP',a:cs1,c:'#C45D35'},{n:'House SIP',a:hs1,c:'#0891B2'},{n:'Wealth SIP',a:ws1,c:'#059669'},{n:'Expenses',a:80000,c:'#94A3B8'}],total:p1t},
+    {title:'PHASE 2: AGE '+salAge+'–'+carAge,sub:'Salary ₹5L/month',items:[{n:'Car SIP',a:cs2,c:'#C45D35'},{n:'House SIP',a:hs2,c:'#0891B2'},{n:'Wealth SIP',a:ws2,c:'#059669'},{n:'Expenses',a:200000,c:'#94A3B8'}],total:p2t},
+    {title:'PHASE 3: AGE '+carAge+'–'+houseAge,sub:'Car bought!',items:[{n:'House SIP',a:hs3,c:'#0891B2'},{n:'Wealth SIP',a:ws3,c:'#059669'},{n:'Expenses',a:200000,c:'#94A3B8'}],total:p3t},
+    {title:'PHASE 4: AGE '+houseAge+'–'+retAge,sub:'House bought!',items:[{n:'Wealth SIP',a:ws4,c:'#059669'},{n:'Expenses',a:200000,c:'#94A3B8'}],total:p4t},
+  ];
+  let html='';
+  phases.forEach(p=>{
+    html+=`<div class="budget-card"><div class="budget-title"><span>${p.title}</span><span style="color:var(--text-dim);font-size:12px;font-weight:400">${p.sub}</span></div>`;
+    html+=`<div class="budget-bar">`;
+    p.items.forEach(i=>{html+=`<div style="width:${i.a/p.total*100}%;background:${i.c}">${Math.round(i.a/p.total*100)}%</div>`;});
+    html+=`</div><div class="budget-items">`;
+    p.items.forEach(i=>{html+=`<div class="budget-item"><div class="budget-dot" style="background:${i.c}"></div>${i.n}: <strong style="color:var(--text)">${inr(i.a)}</strong></div>`;});
+    html+=`<div class="budget-item" style="margin-left:auto;font-weight:700;color:var(--terracotta)">Total: ${inr(p.total)}</div>`;
+    html+=`</div></div>`;
+  });
+  document.getElementById('budget-content').innerHTML=html;
+}
+
+Chart.defaults.color='#7A8BA8';
+Chart.defaults.borderColor='rgba(0,0,0,0.04)';
+calcCar();calcHouse();calcWealth();buildBudget();
+
+/* ══════════ EDITABLE VALUE BOXES ══════════
+ * Click any value box → type exact number → Enter or click away to apply
+ * Automatically syncs with the slider, clamps to min/max, snaps to step
+ */
+document.querySelectorAll('.input-val').forEach(el=>{
+  const row=el.closest('.input-row');
+  if(!row)return;
+  const slider=row.querySelector('input[type=range]');
+  if(!slider)return;
+
+  el.setAttribute('contenteditable','true');
+  el.setAttribute('inputmode','decimal');
+  el.setAttribute('tabindex','0');
+
+  el.addEventListener('focus',()=>{
+    // Show raw slider value for easy editing
+    el.textContent=slider.value;
+    // Select all text
+    requestAnimationFrame(()=>{
+      const range=document.createRange();
+      range.selectNodeContents(el);
+      const sel=window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+  });
+
+  el.addEventListener('blur',()=>{
+    const raw=el.textContent.replace(/[^0-9.\-]/g,'');
+    const num=parseFloat(raw);
+    if(!isNaN(num)){
+      const min=parseFloat(slider.min),max=parseFloat(slider.max);
+      const step=parseFloat(slider.step)||1;
+      const clamped=Math.min(max,Math.max(min,num));
+      const snapped=Math.round(clamped/step)*step;
+      // Handle float precision for decimal steps
+      const decimals=step.toString().includes('.')?step.toString().split('.')[1].length:0;
+      slider.value=parseFloat(snapped.toFixed(decimals));
+    }
+    // Trigger recalculation (updates the display with proper formatting)
+    slider.dispatchEvent(new Event('input'));
+  });
+
+  el.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();el.blur();}
+    if(e.key==='Escape'){el.textContent=slider.value;el.blur();}
+    // Allow: digits, decimal, backspace, delete, arrows, tab
+    const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End','.'];
+    if(!allowed.includes(e.key)&&(e.key<'0'||e.key>'9')&&!e.ctrlKey&&!e.metaKey){
+      e.preventDefault();
+    }
+  });
+
+  // Prevent paste of non-numeric
+  el.addEventListener('paste',e=>{
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData('text').replace(/[^0-9.]/g,'');
+    document.execCommand('insertText',false,text);
+  });
+});
+</script>
+</body>
+</html>
