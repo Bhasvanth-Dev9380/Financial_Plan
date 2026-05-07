@@ -625,6 +625,13 @@ function showTab(t){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
   document.querySelector(`.tab[onclick="showTab('${t}')"]`).classList.add('active');
   document.getElementById(t).classList.add('active');
+  // Recalc the active tab so charts render at correct size
+  requestAnimationFrame(()=>{
+    if(t==='car')calcCar();
+    else if(t==='house')calcHouse();
+    else if(t==='wealth')calcWealth();
+    else buildBudget();
+  });
 }
 
 const CC={grid:'rgba(0,0,0,0.04)',tick:'#7A8BA8',terra:'#C45D35',terraL:'rgba(196,93,53,0.15)',teal:'#0891B2',tealL:'rgba(8,145,178,0.12)',emerald:'#059669',emeraldL:'rgba(5,150,105,0.12)',purple:'#7C3AED',purpleL:'rgba(124,58,237,0.12)'};
@@ -862,6 +869,20 @@ function buildBudget(){
 Chart.defaults.color='#7A8BA8';
 Chart.defaults.borderColor='rgba(0,0,0,0.04)';
 calcCar();calcHouse();calcWealth();buildBudget();
+
+/* ── Resize handler: redraw active tab's charts on orientation/resize ── */
+let resizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{
+    const active=document.querySelector('.page.active');
+    if(!active)return;
+    const id=active.id;
+    if(id==='car')calcCar();
+    else if(id==='house')calcHouse();
+    else if(id==='wealth')calcWealth();
+  },200);
+});
 
 /* ══════════ EDITABLE VALUE BOXES ══════════
  * Click any value box → type exact number → Enter or click away to apply
