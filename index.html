@@ -507,12 +507,14 @@ body::after{width:450px;height:450px;background:radial-gradient(circle,#C4E8D1 0
   <div class="card-title"><div class="icon green-bg">🎯</div>Allocation — Blended CAGR</div>
   <div class="inputs">
     <div class="input-group"><div class="input-label">Large Cap — 12%</div><div class="input-row"><input type="range" id="w-lc" min="0" max="100" step="5" value="40" oninput="calcWealth()"><div class="input-val" id="w-lc-v">40%</div></div></div>
-    <div class="input-group"><div class="input-label">Mid Cap — 14%</div><div class="input-row"><input type="range" id="w-mc" min="0" max="100" step="5" value="30" oninput="calcWealth()"><div class="input-val" id="w-mc-v">30%</div></div></div>
-    <div class="input-group"><div class="input-label">Small Cap — 16%</div><div class="input-row"><input type="range" id="w-sc" min="0" max="100" step="5" value="15" oninput="calcWealth()"><div class="input-val" id="w-sc-v">15%</div></div></div>
+    <div class="input-group"><div class="input-label">Mid Cap — 14%</div><div class="input-row"><input type="range" id="w-mc" min="0" max="100" step="5" value="20" oninput="calcWealth()"><div class="input-val" id="w-mc-v">20%</div></div></div>
+    <div class="input-group"><div class="input-label">Small Cap — 16%</div><div class="input-row"><input type="range" id="w-sc" min="0" max="100" step="5" value="10" oninput="calcWealth()"><div class="input-val" id="w-sc-v">10%</div></div></div>
     <div class="input-group"><div class="input-label">Gold — 10%</div><div class="input-row"><input type="range" id="w-gd" min="0" max="100" step="5" value="10" oninput="calcWealth()"><div class="input-val" id="w-gd-v">10%</div></div></div>
-    <div class="input-group"><div class="input-label">Debt — 7%</div><div class="input-row"><input type="range" id="w-dt" min="0" max="100" step="5" value="5" oninput="calcWealth()"><div class="input-val" id="w-dt-v">5%</div></div></div>
+    <div class="input-group"><div class="input-label">Multi-Asset / Debt — 8%</div><div class="input-row"><input type="range" id="w-dt" min="0" max="100" step="5" value="15" oninput="calcWealth()"><div class="input-val" id="w-dt-v">15%</div></div></div>
+    <div class="input-group"><div class="input-label">US Equity — 12%</div><div class="input-row"><input type="range" id="w-us" min="0" max="100" step="5" value="5" oninput="calcWealth()"><div class="input-val" id="w-us-v">5%</div></div></div>
     <div class="input-group"><div class="input-label">Total</div><div class="input-val" id="w-tot-v" style="font-size:16px;text-align:center;width:100%">100%</div></div>
   </div>
+  <div class="note">Finalized portfolio (Jun '26): HDFC Nifty 50 Index 40% · Motilal Oswal Nifty Midcap 150 Index 20% · Nippon Nifty Smallcap 250 Index 10% · ICICI Multi Asset 15% · SBI Gold 10% · Edelweiss US Tech FoF 5% — all Direct Growth. Plan goals at ~10% CAGR; ~12% is the optimistic case. Rebalance yearly.</div>
 </div>
 
 <div class="grid-2">
@@ -531,9 +533,9 @@ body::after{width:450px;height:450px;background:radial-gradient(circle,#C4E8D1 0
 <div class="card">
   <div class="card-title"><div class="icon teal-bg">📅</div>Monthly SIP Breakdown — 3 Streams</div>
   <div class="stream-legend">
-    <div class="stream-tag"><div class="stream-dot" style="background:var(--teal)"></div>Large Cap / Index</div>
-    <div class="stream-tag"><div class="stream-dot" style="background:var(--purple)"></div>Mid + Flexi Cap</div>
-    <div class="stream-tag"><div class="stream-dot" style="background:var(--emerald)"></div>Small Cap + Gold + Debt</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--teal)"></div>Large Cap Index + US</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--purple)"></div>Mid Cap Index</div>
+    <div class="stream-tag"><div class="stream-dot" style="background:var(--emerald)"></div>Small Cap + Gold + Multi-Asset</div>
   </div>
   <div class="table-wrapper" id="w-table-wrap"></div>
 </div>
@@ -766,16 +768,16 @@ function calcHouse(){
 function calcWealth(){
   const age=gv('w-age'),salAge=gv('w-salage'),carAge=gv('w-carage'),houseAge=gv('w-houseage'),retAge=gv('w-retage');
   const corpus=gv('w-corpus'),s1=gv('w-sip1'),s2=gv('w-sip2'),s3=gv('w-sip3'),s4=gv('w-sip4');
-  const lc=gv('w-lc')/100,mc=gv('w-mc')/100,sc_=gv('w-sc')/100,gd=gv('w-gd')/100,dt=gv('w-dt')/100;
-  const total=lc+mc+sc_+gd+dt;
-  const cagr=total>0?(0.12*lc+0.14*mc+0.16*sc_+0.10*gd+0.07*dt)/total:0.12;
+  const lc=gv('w-lc')/100,mc=gv('w-mc')/100,sc_=gv('w-sc')/100,gd=gv('w-gd')/100,dt=gv('w-dt')/100,us=gv('w-us')/100;
+  const total=lc+mc+sc_+gd+dt+us;
+  const cagr=total>0?(0.12*lc+0.14*mc+0.16*sc_+0.10*gd+0.08*dt+0.12*us)/total:0.12;
   const isStep=sipMode.w,stepRate=isStep?gv('w-step')/100:0;
 
   sv('w-age-v',age);sv('w-salage-v',salAge);sv('w-carage-v',carAge);sv('w-houseage-v',houseAge);sv('w-retage-v',retAge);
   sv('w-corpus-v',inr(corpus));
   sv('w-sip1-v',inr(s1));sv('w-sip2-v',inr(s2));sv('w-sip3-v',inr(s3));sv('w-sip4-v',inr(s4));
   sv('w-lc-v',Math.round(lc*100)+'%');sv('w-mc-v',Math.round(mc*100)+'%');
-  sv('w-sc-v',Math.round(sc_*100)+'%');sv('w-gd-v',Math.round(gd*100)+'%');sv('w-dt-v',Math.round(dt*100)+'%');
+  sv('w-sc-v',Math.round(sc_*100)+'%');sv('w-gd-v',Math.round(gd*100)+'%');sv('w-dt-v',Math.round(dt*100)+'%');sv('w-us-v',Math.round(us*100)+'%');
   const tv=document.getElementById('w-tot-v');
   tv.textContent=Math.round(total*100)+'%';
   tv.style.color=Math.abs(total-1)<0.01?'var(--emerald)':'var(--rose)';
@@ -832,12 +834,12 @@ function calcWealth(){
 
   if(wPie)wPie.destroy();
   wPie=new Chart(document.getElementById('w-pie'),{type:'doughnut',data:{
-    labels:['Large Cap','Mid Cap','Small Cap','Gold','Debt'],
-    datasets:[{data:[lc,mc,sc_,gd,dt],backgroundColor:[CC.teal,CC.purple,CC.emerald,CC.terra,'#94A3B8'],borderWidth:2,borderColor:'#FFFFFF'}]
+    labels:['Large Cap','Mid Cap','Small Cap','Gold','Multi-Asset/Debt','US Equity'],
+    datasets:[{data:[lc,mc,sc_,gd,dt,us],backgroundColor:[CC.teal,CC.purple,CC.emerald,CC.terra,'#94A3B8','#6366F1'],borderWidth:2,borderColor:'#FFFFFF'}]
   },options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:CC.tick,font:{size:11,family:'Plus Jakarta Sans'},padding:12}}}}});
 
-  const st1=lc/(total||1),st2=(mc+sc_*.5)/(total||1),st3=(sc_*.5+gd+dt)/(total||1);
-  renderMonthlyTable('w-table-wrap',R.monthly,[{name:'Large Cap',pct:st1},{name:'Mid+Flexi',pct:st2},{name:'Small+Gold+Debt',pct:st3}]);
+  const st1=(lc+us)/(total||1),st2=(mc+sc_*.5)/(total||1),st3=(sc_*.5+gd+dt)/(total||1);
+  renderMonthlyTable('w-table-wrap',R.monthly,[{name:'Large Cap+US',pct:st1},{name:'Mid+Flexi',pct:st2},{name:'Small+Gold+Debt',pct:st3}]);
   buildBudget();
 }
 
